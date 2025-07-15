@@ -1,6 +1,7 @@
 import {Alert, Text, TouchableOpacity, View} from "react-native";
 import { signOut } from 'firebase/auth';
 import {auth} from "@/firebase-config";
+import ProjectListScreen from "@/screens/ProjectListScreen";
 const HomeScreen =() =>{
 
     const handleLogout = async () =>{
@@ -23,6 +24,7 @@ const HomeScreen =() =>{
             >
                 <Text className="text-white text-lg font-bold">Log Out</Text>
             </TouchableOpacity>
+            <ProjectListScreen />
         </View>
 
     )
