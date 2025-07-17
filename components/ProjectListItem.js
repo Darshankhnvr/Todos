@@ -6,9 +6,9 @@ const ProjectListItem =({item})=>{
 
     const handlePress =() =>{
         router.push({
-            pathname: `/(tabs)/${item.id}`,
-            params: {projectName: item.name, projectId:item.id}
-        })
+            pathname: '/(tabs)/[projectId]', // The "Expo Router Way"
+            params: { projectName: item.name, projectId: item.id }
+        });
     }
     return(
         <TouchableOpacity
