@@ -1,14 +1,50 @@
-import React, {useState} from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, Alert, FlatList} from 'react-native';
 import { signOut } from 'firebase/auth';
 import {auth, db} from "@/firebase-config";
 import {useRouter} from "expo-router";
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import NewProjectModal from "@/components/NewProjectModal";
+import ProjectListItem from "@/components/ProjectListItem";
 
 const ProjectListScreen = () => {
     const router = useRouter()
     const [modalVisible, setModalVisible] = useState(false)
+    const [projects, setProjects] = useState([])
+
+
+// In the useEffect where you handle the query
+    useEffect(() => {
+        if (!auth.currentUser) return;
+
+        try {
+            const q = query(collection(db, 'projects'), where('users', 'array-contains', auth.currentUser.uid));
+
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const projectsData = [];
+                // Make sure to check if querySnapshot exists
+                if (querySnapshot) {
+                    querySnapshot.forEach((doc) => {
+                        if (doc.exists()) {
+                            projectsData.push({
+                                ...doc.data(),
+                                id: doc.id
+                            });
+                        }
+                    });
+                }
+                setProjects(projectsData);
+            }, (error) => {
+                console.error("Error fetching projects:", error);
+                Alert.alert("Error", "Failed to fetch projects");
+            });
+
+            return () => unsubscribe();
+        } catch (error) {
+            console.error("Error setting up listener:", error);
+            Alert.alert("Error", "Failed to set up projects listener");
+        }
+    }, [auth.currentUser]);
 
     const handleLogout = async () => {
         await signOut(auth);
@@ -49,10 +85,17 @@ const ProjectListScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Project List Area - This will be empty for now */}
-            <View className="flex-1">
-                <Text className="text-gray-400 text-center">You have no projects yet.</Text>
-            </View>
+            <FlatList
+                data={projects}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => <ProjectListItem item={item} />}
+                // This will be shown if the list is empty
+                ListEmptyComponent={() => (
+                    <Text className="text-gray-400 text-center mt-10">
+                        You have no projects yet. Tap '+ New Project' to begin.
+                    </Text>
+                )}
+            />
 
             <NewProjectModal
                 visible={modalVisible}
